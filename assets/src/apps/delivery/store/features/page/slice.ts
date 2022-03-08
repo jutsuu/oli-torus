@@ -21,6 +21,8 @@ export interface PageState {
   score: number;
   graded: boolean;
   activeEverapp: string;
+  previousPageURL?: string;
+  nextPageURL?: string;
 }
 
 const initialState: PageState = {
@@ -65,6 +67,9 @@ const pageSlice = createSlice({
       state.previewMode = !!action.payload.previewMode;
       state.activityTypes = action.payload.activityTypes;
       state.graded = !!action.payload.graded;
+
+      state.previousPageURL = action.payload.previousPageURL || '';
+      state.nextPageURL = action.payload.nextPageURL || '';
 
       if (state.previewMode && !state.resourceAttemptGuid) {
         state.resourceAttemptGuid = `preview_${guid()}`;
@@ -120,5 +125,10 @@ export const selectIsLegacyTheme = createSelector(
   selectState,
   (state) => !state.content?.custom?.themeId,
 );
+
+export const selectSectionNavigation = createSelector(selectState, (state) => ({
+  previousPageURL: state.previousPageURL,
+  nextPageURL: state.nextPageURL,
+}));
 
 export default pageSlice.reducer;

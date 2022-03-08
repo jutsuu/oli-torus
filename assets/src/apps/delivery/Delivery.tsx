@@ -27,6 +27,8 @@ export interface DeliveryProps {
   enableHistory?: boolean;
   activityTypes?: any[];
   graded: boolean;
+  previousPageURL?: string;
+  nextPageURL?: string;
 }
 
 const Delivery: React.FC<DeliveryProps> = ({
@@ -44,6 +46,8 @@ const Delivery: React.FC<DeliveryProps> = ({
   previewMode = false,
   enableHistory = false,
   graded = false,
+  previousPageURL,
+  nextPageURL,
 }) => {
   const dispatch = useDispatch();
   const currentGroup = useSelector(selectCurrentGroup);
@@ -77,6 +81,8 @@ const Delivery: React.FC<DeliveryProps> = ({
         score: 0,
         graded,
         activeEverapp: 'none',
+        previousPageURL,
+        nextPageURL,
       }),
     );
   };
