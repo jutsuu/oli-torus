@@ -13,15 +13,22 @@ import ActivitiesSlice from '../../../../delivery/store/features/activities/name
 
 import { selectProjectSlug, selectReadOnly } from '../../app/slice';
 import { savePage } from '../../page/actions/savePage';
-import { selectResourceId, selectState as selectCurrentPage, updatePage } from '../../page/slice';
+import { selectResourceId, selectState as selectCurrentPage } from '../../page/slice';
+import { createUndoAction } from '../../history/slice';
+import cloneDeep from 'lodash/cloneDeep';
+import { updateSequenceItemFromActivity } from '../../groups/layouts/deck/actions/updateSequenceItemFromActivity';
+import { selectCurrentGroup } from 'apps/delivery/store/features/groups/slice';
+import { diff } from 'deep-object-diff';
 
 export const saveActivity = createAsyncThunk(
   `${ActivitiesSlice}/saveActivity`,
-  async (payload: { activity: IActivity }, { dispatch, getState }) => {
-    const { activity } = payload;
+  async (payload: { activity: IActivity; undoable?: boolean }, { dispatch, getState }) => {
+    const { activity, undoable = true } = payload;
     const rootState = getState() as any;
     const projectSlug = selectProjectSlug(rootState);
     const resourceId = selectResourceId(rootState);
+    const currentActivityState = selectActivityById(rootState, activity.id) as IActivity;
+    const group = selectCurrentGroup(rootState);
 
     const isReadOnlyMode = selectReadOnly(rootState);
 
@@ -44,7 +51,7 @@ export const saveActivity = createAsyncThunk(
     };
 
     if (!isReadOnlyMode) {
-      /* console.log('going to save acivity: ', { changeData, activity }); */
+      /*console.log('going to save acivity: ', { changeData, activity });*/
       const editResults = await edit(
         projectSlug,
         resourceId,
@@ -60,11 +67,27 @@ export const saveActivity = createAsyncThunk(
       await dispatch(upsertActivity({ activity }));
 
       const currentPage = selectCurrentPage(rootState);
-      if (!currentPage.custom.scoreFixed) {
-        // need to check if this update to an activity affects the total score
-        if (activity.content?.custom.maxScore !== oldActivityData?.content?.custom.maxScore) {
-          await dispatch(savePage());
-        }
+
+      const updatePage =
+        activity.title !== currentActivityState?.title ||
+        (!currentPage.custom.scoreFixed &&
+          activity.content?.custom.maxScore !== oldActivityData?.content?.custom.maxScore);
+
+      if (updatePage) {
+        dispatch(updateSequenceItemFromActivity({ activity, group }));
+        await dispatch(savePage({}));
+      }
+
+      console.log('EDIT SAVE RESULTS', { editResults });
+
+      /*console.log('EDIT SAVE RESULTS', { editResults });*/
+      if (undoable) {
+        dispatch(
+          createUndoAction({
+            undo: [saveActivity({ activity: cloneDeep(currentActivityState), undoable: false })],
+            redo: [saveActivity({ activity: cloneDeep(activity), undoable: false })],
+          }),
+        );
       }
     }
 
@@ -74,15 +97,20 @@ export const saveActivity = createAsyncThunk(
 
 export const bulkSaveActivity = createAsyncThunk(
   `${ActivitiesSlice}/bulkSaveActivity`,
-  async (payload: { activities: IActivity[] }, { dispatch, getState }) => {
-    const { activities } = payload;
+  async (payload: { activities: IActivity[]; undoable?: boolean }, { dispatch, getState }) => {
+    const { activities, undoable = false } = payload;
     const rootState = getState() as any;
     const projectSlug = selectProjectSlug(rootState);
     const pageResourceId = selectResourceId(rootState);
-
+    const currentActivities = selectAllActivities(rootState);
     const isReadOnlyMode = selectReadOnly(rootState);
 
-    dispatch(upsertActivities({ activities }));
+    console.log(
+      'bulkSaveActivity',
+      currentActivities,
+      activities,
+      diff(currentActivities, activities),
+    );
 
     if (!isReadOnlyMode) {
       const updates: BulkActivityUpdate[] = activities.map((activity) => {
@@ -106,6 +134,16 @@ export const bulkSaveActivity = createAsyncThunk(
         return changeData;
       });
       await bulkEdit(projectSlug, pageResourceId, updates);
+      if (undoable) {
+        await dispatch(
+          createUndoAction({
+            undo: [bulkSaveActivity({ activities: cloneDeep(currentActivities) })],
+            redo: [bulkSaveActivity({ activities: cloneDeep(activities) })],
+          }),
+        );
+      }
+
+      dispatch(upsertActivities({ activities }));
     }
     return;
   },

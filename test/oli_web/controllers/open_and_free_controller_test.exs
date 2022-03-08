@@ -40,6 +40,61 @@ defmodule OliWeb.OpenAndFreeControllerTest do
     end
   end
 
+  describe "new" do
+    setup [:create_fixtures]
+
+    test "renders form from product", %{conn: conn, section: section} do
+      conn =
+        get(conn, Routes.admin_open_and_free_path(conn, :new, source_id: "product:#{section.id}"))
+
+      assert html_response(conn, 200) =~ "Source Product"
+      assert conn.resp_body =~ "Registration Open"
+
+      assert conn.resp_body =~
+               ~r/<input .* id="section_registration_open" .* value="true"/
+
+      assert conn.resp_body =~ "Requires Enrollment"
+
+      assert conn.resp_body =~
+               ~r/<input .* id="section_requires_enrollment" .* value="true"/
+    end
+
+    test "renders form from publication", %{conn: conn, publication: publication} do
+      conn =
+        get(
+          conn,
+          Routes.admin_open_and_free_path(conn, :new, source_id: "publication:#{publication.id}")
+        )
+
+      assert html_response(conn, 200) =~ "Source Project"
+      assert conn.resp_body =~ "Registration Open"
+
+      assert conn.resp_body =~
+               ~r/<input .* id="section_registration_open" .* value="true"/
+
+      assert conn.resp_body =~ "Requires Enrollment"
+
+      assert conn.resp_body =~
+               ~r/<input .* id="section_requires_enrollment" .* value="true"/
+    end
+
+    test "renders form from project", %{conn: conn, project: project} do
+      conn =
+        get(conn, Routes.admin_open_and_free_path(conn, :new, source_id: "project:#{project.id}"))
+
+      assert html_response(conn, 200) =~ "Source Project"
+      assert conn.resp_body =~ "Registration Open"
+
+      assert conn.resp_body =~
+               ~r/<input .* id="section_registration_open" .* value="true"/
+
+      assert conn.resp_body =~ "Requires Enrollment"
+
+      assert conn.resp_body =~
+               ~r/<input .* id="section_requires_enrollment" .* value="true"/
+    end
+  end
+
   describe "create open_and_free" do
     setup [:create_fixtures]
 
