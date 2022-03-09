@@ -23,8 +23,8 @@ type Props = {
   preventLargeContent?: boolean;
 };
 export const RichTextEditor: React.FC<Props> = (props) => {
-  // Support content persisted when RichText had a `model` property.
-  const value = (props.value as any).model ? (props.value as any).model : props.value;
+  // Support content persisted when RichText didn't have a `model` property.
+  const value = (props.value as any)?.model ?? props.value;
 
   return (
     <div className={classNames(['rich-text-editor', props.className])}>

@@ -33,7 +33,9 @@ export type ChoiceId = ID;
 export type PartId = ID;
 export type ResponseId = ID;
 
-export type RichText = ModelElement[];
+export type RichText = {
+  model: ModelElement[];
+};
 
 export interface Success {
   type: 'success';
@@ -45,7 +47,9 @@ export interface HasContent {
 export function makeContent(text: string, id?: string): { id: string; content: RichText } {
   return {
     id: id ? id : guid(),
-    content: [Model.p(text)],
+    content: {
+      model: [Model.p(text)],
+    },
   };
 }
 
