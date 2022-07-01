@@ -2,7 +2,6 @@
 
 .contentBlock {
   width: 100%;
-  padding: 0 20px;
 
   :global(.slate-editor) {
     padding: 0 calc(50% - 400px) !important;
@@ -16,8 +15,6 @@
 }
 
 .groupBlock {
-  margin: 20px;
-
   // handle the special case when purpose type is none, apply the
   // padding styles to slate editor itself. this allows slate to utilize
   // the entire surrounding padding for cursor events and allow for easier
@@ -79,7 +76,6 @@
 }
 
 .activityBlock {
-  margin: 20px;
   padding: 0 calc(50% - 400px);
 }
 
@@ -89,7 +85,6 @@
 }
 
 .surveyBlock {
-  margin: 20px;
   padding: 0 calc(50% - 400px);
 
   :global(i.las.la-poll) {
